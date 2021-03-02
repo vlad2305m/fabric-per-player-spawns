@@ -1,15 +1,15 @@
 package dev.lambdacraft.perplayerspawns.util;
 
 import dev.lambdacraft.perplayerspawns.Main;
-import dev.lambdacraft.perplayerspawns.access.PlayerEntityAccess;
 import dev.lambdacraft.perplayerspawns.access.MinecraftServerAccess;
-import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import dev.lambdacraft.perplayerspawns.access.PlayerEntityAccess;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.ChunkSectionPos;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +74,7 @@ public final class PlayerMobDistanceMap {
 	}
 
 	// expensive op, only for debug
-	private void validatePlayer(final PlayerEntity player, final int viewDistance) {
+	/*private void validatePlayer(final PlayerEntity player, final int viewDistance) {
 
 		int entiesGot = 0;
 		int expectedEntries = (2 * viewDistance + 1);
@@ -110,7 +110,7 @@ public final class PlayerMobDistanceMap {
 		if (entiesGot != expectedEntries) {
 			throw new IllegalStateException("Expected " + expectedEntries + ", got " + entiesGot);
 		}
-	}
+	}*/
 
 	private void addPlayerTo(final PlayerEntity player, final int chunkX, final int chunkZ) {
 		this.playerMap.compute(ChunkPos.toLong(chunkX, chunkZ), (final Long key, final PooledHashSets.PooledObjectLinkedOpenHashSet<PlayerEntity> players) -> {
@@ -124,6 +124,7 @@ public final class PlayerMobDistanceMap {
 
 	private void removePlayerFrom(final PlayerEntity player, final int chunkX, final int chunkZ) {
 		this.playerMap.compute(ChunkPos.toLong(chunkX, chunkZ), (final Long keyInMap, final PooledHashSets.PooledObjectLinkedOpenHashSet<PlayerEntity> players) -> {
+			assert players != null;
 			return PlayerMobDistanceMap.this.pooledHashSets.findMapWithout(players, player); // rets null instead of an empty map
 		});
 	}

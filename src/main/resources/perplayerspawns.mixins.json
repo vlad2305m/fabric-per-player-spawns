@@ -9,7 +9,8 @@
     "ServerChunkManagerMixin",
     "ServerWorldMixin",
     "SpawnHelperMixin",
-    "TACSMixin"
+    "TACSMixin",
+    "WeirdInfoAkaGravityAndMobCapCheckingMixin"
   ],
   "client": [
   ],

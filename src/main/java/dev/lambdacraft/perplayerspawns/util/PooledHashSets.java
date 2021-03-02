@@ -20,7 +20,6 @@ public class PooledHashSets<E> {
         }
 
         this.mapPool.remove(current);
-        return;
     }
 
     public PooledObjectLinkedOpenHashSet<E> findMapWith(final PooledObjectLinkedOpenHashSet<E> current, final E object) {

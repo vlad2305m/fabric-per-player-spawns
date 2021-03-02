@@ -20,11 +20,7 @@ public abstract class TACSMixin implements TACSAccess {
 		int chunkX = (int) Math.floor(entity.getX()) >> 4;
 		int chunkZ = (int) Math.floor(entity.getZ()) >> 4;
 
-		// 1.14.4
-//		int chunkX = (int) Math.floor(entity.x) >> 4;
-//		int chunkZ = (int) Math.floor(entity.z) >> 4;
-
-		int index = entity.getType().getCategory().ordinal();
+		int index = entity.getType().getSpawnGroup().ordinal();
 
 		// Find players in range of entity
 		for (PlayerEntity player : this.playerMobDistanceMap.getPlayersInRange(chunkX, chunkZ)) {
