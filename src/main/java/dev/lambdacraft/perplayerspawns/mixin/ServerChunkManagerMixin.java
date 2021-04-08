@@ -6,6 +6,7 @@ import dev.lambdacraft.perplayerspawns.util.PlayerMobDistanceMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkHolder;
 import net.minecraft.server.world.ServerChunkManager;
 import net.minecraft.server.world.ServerWorld;
@@ -154,6 +155,10 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 		///////////////////////
 		((InfoAccess)info).setChunkManager(this);
 		return info;
+	}
+
+	public int Nnonspectators(){
+		return this.world.getPlayers((ServerPlayerEntity) -> !ServerPlayerEntity.isSpectator()).size();
 	}
 }
 

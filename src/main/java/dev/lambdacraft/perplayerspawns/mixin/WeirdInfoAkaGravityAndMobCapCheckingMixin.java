@@ -20,6 +20,8 @@ public class WeirdInfoAkaGravityAndMobCapCheckingMixin implements InfoAccess {
 
     @Inject(method = "isBelowCap", at = @At("HEAD"), cancellable = true)
     private void isBelowPlayerCap(SpawnGroup group, CallbackInfoReturnable<Boolean> callbackInfoReturnable) {
-        callbackInfoReturnable.setReturnValue(chunkManager.getNOfMobsToSpawn(group) > 0);
+        if (chunkManager.Nnonspectators()>1) {
+            callbackInfoReturnable.setReturnValue(chunkManager.getNOfMobsToSpawn(group) > 0);
+        }
     }
 }
