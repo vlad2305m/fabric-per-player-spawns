@@ -108,7 +108,6 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 	private ChunkHolder holder;
 
 	//this is just a little lambda, it exists just fine
-	@SuppressWarnings("UnresolvedMixinReference")
 	@Redirect(method = "method_20801(JZLnet/minecraft/world/SpawnHelper$Info;ZILnet/minecraft/server/world/ChunkHolder;)V", at = @At (value = "INVOKE", target = "net/minecraft/server/world/ChunkHolder.getPos()Lnet/minecraft/util/math/ChunkPos;"))
 	//Steal it each time just before spawning starts
 	private ChunkPos stealChunkHolder(ChunkHolder chunkHolder){
