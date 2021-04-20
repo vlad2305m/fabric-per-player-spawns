@@ -16,7 +16,7 @@ public class SpawnHelperMixin {
 			method = "spawnEntitiesInChunk(Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V",
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/mob/MobEntity;getLimitPerChunk()I"))
 	private static int getLimitPerChunk(MobEntity entity, SpawnGroup dummy1, ServerWorld world) {
-		if (world.getPlayers((ServerPlayerEntity) -> !ServerPlayerEntity.isSpectator()).size() > Main.playerLowerBound) {
+		if (world.getPlayers((ServerPlayerEntity) -> !ServerPlayerEntity.isSpectator()).size() >= Main.playerLowerBound) {
 			SpawnHelperAccess.trackEntity.get().accept(entity);
 
 			// need to exit in spawnEntitiesInChunk if (spawnCountInChunk >= thisReturnValue)
