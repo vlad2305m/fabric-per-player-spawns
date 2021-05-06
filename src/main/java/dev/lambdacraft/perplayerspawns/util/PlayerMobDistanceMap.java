@@ -38,7 +38,7 @@ public final class PlayerMobDistanceMap {
 
 	public void update(final List<ServerPlayerEntity> currentPlayers, final int newViewDistance) {
 		if(Thread.currentThread() != Main.current.getThread()) {
-			Logger.getLogger("Player Distance Map").warning("oi m8 wrong thread");
+			Logger.getLogger("Player Distance Map").warning("oi m8 wrong thread. If you didn't intend to change the thread report to dev.");
 			//return;
 		}
 		final ObjectLinkedOpenHashSet<PlayerEntity> gone = new ObjectLinkedOpenHashSet<>(this.players.keySet());
