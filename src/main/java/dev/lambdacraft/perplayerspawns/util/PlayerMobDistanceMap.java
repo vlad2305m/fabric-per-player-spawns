@@ -1,7 +1,6 @@
 package dev.lambdacraft.perplayerspawns.util;
 
 import dev.lambdacraft.perplayerspawns.Main;
-import dev.lambdacraft.perplayerspawns.access.MinecraftServerAccess;
 import dev.lambdacraft.perplayerspawns.access.PlayerEntityAccess;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
@@ -38,23 +37,23 @@ public final class PlayerMobDistanceMap {
 	}
 
 	public void update(final List<ServerPlayerEntity> currentPlayers, final int newViewDistance) {
-		if(Thread.currentThread() != ((MinecraftServerAccess) Main.current).getServerThread()) {
+		if(Thread.currentThread() != Main.current.getThread()) {
 			Logger.getLogger("Player Distance Map").warning("oi m8 wrong thread");
-			return;
+			//return;
 		}
 		final ObjectLinkedOpenHashSet<PlayerEntity> gone = new ObjectLinkedOpenHashSet<>(this.players.keySet());
 
 		final int oldViewDistance = this.viewDistance;
 		this.viewDistance = newViewDistance;
 
-		for (final PlayerEntity player : currentPlayers) {
+		for (final ServerPlayerEntity player : currentPlayers) {
 			if (player.isSpectator() /*|| !player.affectsSpawning*/) { // todo
 				continue; // will be left in 'gone' (or not added at all)
 			}
 
 			gone.remove(player);
 
-			final ChunkSectionPos newPosition = ((ServerPlayerEntity)player).getCameraPosition();
+			final ChunkSectionPos newPosition = player.getCameraPosition();
 			final ChunkSectionPos oldPosition = this.players.put(player, newPosition);
 
 			if (oldPosition == null) {
