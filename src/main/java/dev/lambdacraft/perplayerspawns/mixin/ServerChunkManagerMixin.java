@@ -14,6 +14,7 @@ import net.minecraft.server.world.ThreadedAnvilChunkStorage;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.SpawnHelper;
+import net.minecraft.world.World;
 import net.minecraft.world.chunk.WorldChunk;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -32,6 +33,9 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 	@Shadow @Final private ServerWorld world;
 
 	@Shadow @Final public ThreadedAnvilChunkStorage threadedAnvilChunkStorage;
+
+
+	@Shadow public World getWorld() {return null;}
 
 	//@Shadow @Final private static int CHUNKS_ELIGIBLE_FOR_SPAWNING;
 

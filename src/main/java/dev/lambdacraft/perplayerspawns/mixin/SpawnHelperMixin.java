@@ -1,6 +1,6 @@
 package dev.lambdacraft.perplayerspawns.mixin;
 
-import dev.lambdacraft.perplayerspawns.Main;
+import dev.lambdacraft.perplayerspawns.Settings;
 import dev.lambdacraft.perplayerspawns.access.SpawnHelperAccess;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.mob.MobEntity;
@@ -16,7 +16,8 @@ public class SpawnHelperMixin {
 			method = "spawnEntitiesInChunk(Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V",
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/mob/MobEntity;getLimitPerChunk()I"))
 	private static int getLimitPerChunk(MobEntity entity, SpawnGroup dummy1, ServerWorld world) {
-		if (world.getPlayers((ServerPlayerEntity) -> !ServerPlayerEntity.isSpectator()).size() >= Main.playerLowerBound) {
+		if (world.getPlayers((ServerPlayerEntity) -> !ServerPlayerEntity.isSpectator()).size() >= Settings.playerLowerBound
+		&& (!Settings.only_overworld || world.getDimension().isBedWorking())) {
 			SpawnHelperAccess.trackEntity.get().accept(entity);
 
 			// need to exit in spawnEntitiesInChunk if (spawnCountInChunk >= thisReturnValue)

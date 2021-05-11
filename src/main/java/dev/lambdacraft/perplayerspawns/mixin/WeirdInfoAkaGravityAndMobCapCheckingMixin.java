@@ -1,6 +1,6 @@
 package dev.lambdacraft.perplayerspawns.mixin;
 
-import dev.lambdacraft.perplayerspawns.Main;
+import dev.lambdacraft.perplayerspawns.Settings;
 import dev.lambdacraft.perplayerspawns.access.InfoAccess;
 import dev.lambdacraft.perplayerspawns.access.ServerChunkManagerMixinAccess;
 import net.minecraft.entity.SpawnGroup;
@@ -21,8 +21,10 @@ public class WeirdInfoAkaGravityAndMobCapCheckingMixin implements InfoAccess {
 
     @Inject(method = "isBelowCap", at = @At("HEAD"), cancellable = true)
     private void isBelowPlayerCap(SpawnGroup group, CallbackInfoReturnable<Boolean> callbackInfoReturnable) {
-        if (chunkManager.Nnonspectators() >= Main.playerLowerBound) {
+        if (chunkManager.Nnonspectators() >= Settings.playerLowerBound
+                && (!Settings.only_overworld || chunkManager.getWorld().getDimension().isBedWorking())) {
             callbackInfoReturnable.setReturnValue(chunkManager.getNOfMobsToSpawn(group) > 0);
         }
     }
+
 }
