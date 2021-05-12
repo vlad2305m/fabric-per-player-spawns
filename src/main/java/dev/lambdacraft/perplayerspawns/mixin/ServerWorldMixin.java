@@ -22,11 +22,12 @@ public abstract class ServerWorldMixin implements ServerWorldAccess {
 
 	@Override
 	public void updatePlayerMobTypeMapFromWorld() {
+		//System.out.println("From Spawn Cycle");
 		for (Entity entity : this.entitiesById.values()) {
 			boolean isMobEntity = entity instanceof MobEntity;
 			if (isMobEntity) {
 				MobEntity mobEntity = (MobEntity) entity;
-				if (mobEntity.isPersistent() && mobEntity.cannotDespawn()) continue;
+				if (mobEntity.isPersistent() || mobEntity.cannotDespawn()) continue;
 			}
 
 			SpawnGroup category = entity.getType().getSpawnGroup();

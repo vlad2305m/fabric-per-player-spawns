@@ -8,7 +8,6 @@
     "PlayerEntityMixin",
     "ServerChunkManagerMixin",
     "ServerWorldMixin",
-    "SpawnHelperMixin",
     "TACSMixin",
     "WeirdInfoAkaGravityAndMobCapCheckingMixin"
   ],

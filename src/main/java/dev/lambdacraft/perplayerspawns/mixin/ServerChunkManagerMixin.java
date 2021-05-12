@@ -6,11 +6,11 @@ import dev.lambdacraft.perplayerspawns.util.PlayerMobDistanceMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkHolder;
 import net.minecraft.server.world.ServerChunkManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.server.world.ThreadedAnvilChunkStorage;
+import net.minecraft.text.LiteralText;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.SpawnHelper;
@@ -26,18 +26,19 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.logging.Logger;
 
-// crust name: ChunkProviderServer
+
 @Mixin (ServerChunkManager.class)
 public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 	@Shadow @Final private ServerWorld world;
 
 	@Shadow @Final public ThreadedAnvilChunkStorage threadedAnvilChunkStorage;
 
+	public TACSAccess getTACS() {return (TACSAccess) this.threadedAnvilChunkStorage;}
+
 
 	@Shadow public World getWorld() {return null;}
-
-	//@Shadow @Final private static int CHUNKS_ELIGIBLE_FOR_SPAWNING;
 
 	////////////////////////
 	//fixed some yelling by reimplementing removed method
@@ -123,7 +124,7 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 		TACSAccess tacs = (TACSAccess)this.threadedAnvilChunkStorage;
 		PlayerMobDistanceMap mobDistanceMap = tacs.playerMobDistanceMap();
 		Optional<WorldChunk> optional = holder.getEntityTickingFuture().getNow(ChunkHolder.UNLOADED_WORLD_CHUNK).left();
-			if(!optional.isPresent()) return 0;
+			if(!optional.isPresent()) { Logger.getLogger("Player Distance Map").warning("Chunk for spawning is unloaded?!?"); return 0; }
 			WorldChunk chunk = optional.get();
 
 		int minDiff = Integer.MAX_VALUE;
@@ -134,19 +135,22 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 			minDiff = Math.min(category.getCapacity() -  mobCountNearPlayer, minDiff);
 		}
 
-		//?????????????????????
-		SpawnHelperAccess.maxSpawns.set((minDiff == Integer.MAX_VALUE) ? 0 : minDiff); // to pass diff to spawnEntitiesInChunk
-		SpawnHelperAccess.trackEntity.set(tacs::updatePlayerMobTypeMap);
-		//?????????????????????
-
 		return (minDiff == Integer.MAX_VALUE) ? 0 : minDiff;
 	}
 	//parse all the good stuff down to where I moved the logic
 	@Redirect(method = "tickChunks", at = @At(value = "INVOKE",
 			target = "net/minecraft/world/SpawnHelper.setupSpawn (ILjava/lang/Iterable;Lnet/minecraft/world/SpawnHelper$ChunkSource;)Lnet/minecraft/world/SpawnHelper$Info;"))
 	private SpawnHelper.Info insertChunkManager(int spawningChunkCount, Iterable<Entity> entities, SpawnHelper.ChunkSource chunkSource){
+
 		SpawnHelper.Info info = SpawnHelper.setupSpawn(spawningChunkCount, entities, chunkSource);
+
 		///////migrated////////
+	/*
+		Every all-chunks tick:
+		1. Update distance map by adding all players
+		2. Reset player's nearby mob counts
+		3. Loop through all world's entities and add them to player's counts
+	 */
 		TACSAccess tacs = ((TACSAccess) this.threadedAnvilChunkStorage);
 		// update distance map
 		tacs.playerMobDistanceMap().update(this.world.getPlayers(), tacs.renderDistance());
@@ -154,8 +158,44 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 		for (PlayerEntity player : this.world.getPlayers()) {
 			Arrays.fill(((PlayerEntityAccess) player).getMobCounts(), 0);
 		}
+		// loop
 		((ServerWorldAccess)this.world).updatePlayerMobTypeMapFromWorld();
 		///////////////////////
+
+		/* debugging * /
+		PlayerMobDistanceMap mobDistanceMap = tacs.playerMobDistanceMap();
+		for (PlayerEntity player : this.world.getPlayers()) {
+
+			//System.out.println(player.getName().asString() + ": " + Arrays.toString(((PlayerEntityAccess) player).getMobCounts()));
+			if (player.isCreative()) {
+				int x = ((int) player.getX()) / 16;
+				int z = ((int) player.getZ()) / 16;
+				PlayerEntity playerM = player;
+				int mobCountNearPlayer = ((PlayerEntityAccess) player).getMobCountForSpawnGroup(SpawnGroup.MONSTER);
+				int mobCountNearPlayerM = ((PlayerEntityAccess) player).getMobCountForSpawnGroup(SpawnGroup.MONSTER);
+				for (PlayerEntity playerN : mobDistanceMap.getPlayersInRange(x, z)) {
+					int mobCountNearPlayerN = ((PlayerEntityAccess) playerN).getMobCountForSpawnGroup(SpawnGroup.MONSTER);
+					if (mobCountNearPlayerN > mobCountNearPlayerM) {
+						playerM = playerN;
+						mobCountNearPlayerM = mobCountNearPlayerN;
+					}
+				}
+				player.sendMessage(new LiteralText("You: " + mobCountNearPlayer + "; " + playerM.getName().asString()+": "+mobCountNearPlayerM), true);
+			}
+			else if(player.isSpectator()) {
+				StringBuilder str = new StringBuilder();
+				str.append("Players: ");
+				int x = ((int) player.getX()) / 16;
+				int z = ((int) player.getZ()) / 16;
+				for (PlayerEntity playerN : mobDistanceMap.getPlayersInRange(x, z)) {
+					str.append(playerN.getName().asString()).append(" ")
+							.append(((PlayerEntityAccess) playerN).getMobCountForSpawnGroup(SpawnGroup.MONSTER)).append(", ");
+				}
+				player.sendMessage(new LiteralText(str.toString()), true);
+			}
+		}
+		/**/
+
 		((InfoAccess)info).setChunkManager(this);
 		return info;
 	}

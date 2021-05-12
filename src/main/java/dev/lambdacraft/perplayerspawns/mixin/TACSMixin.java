@@ -26,7 +26,9 @@ public abstract class TACSMixin implements TACSAccess {
 		for (PlayerEntity player : this.playerMobDistanceMap.getPlayersInRange(chunkX, chunkZ)) {
 			// Increment player's sighting of entity
 			((PlayerEntityAccess)player).getMobCounts()[index] += 1;
+			//System.out.print(" +1 ");
 		}
+		//System.out.print(";");
 	}
 
 	@Override

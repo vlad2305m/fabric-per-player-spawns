@@ -36,9 +36,11 @@ public final class PlayerMobDistanceMap {
 		return this.playerMap.getOrDefault(ChunkPos.toLong(chunkX, chunkZ), EMPTY_SET);
 	}
 
+	private boolean warned = false;
 	public void update(final List<ServerPlayerEntity> currentPlayers, final int newViewDistance) {
-		if(Thread.currentThread() != Main.current.getThread()) {
-			Logger.getLogger("Player Distance Map").warning("oi m8 wrong thread. If you didn't intend to change the thread report to dev.");
+		if(Thread.currentThread() != Main.current.getThread() && !warned) {
+			Logger.getLogger("Fabric Per Player Spawns").warning("oi m8 wrong thread. If you didn't intend to change the thread report to dev.");
+			warned = true;
 			//return;
 		}
 		final ObjectLinkedOpenHashSet<PlayerEntity> gone = new ObjectLinkedOpenHashSet<>(this.players.keySet());
@@ -140,7 +142,7 @@ public final class PlayerMobDistanceMap {
 		final int totalX = Math.abs(fromX - toX);
 		final int totalZ = Math.abs(fromZ - toZ);
 
-		if (Math.max(totalX, totalZ) > (2 * oldViewDistance)) {
+		if (Math.max(totalX, totalZ) >= (2 * oldViewDistance)) {
 			// teleported?
 			this.removePlayer(player, oldPosition, oldViewDistance);
 			this.addNewPlayer(player, newPosition, newViewDistance);
