@@ -2,45 +2,62 @@ package dev.lambdacraft.perplayerspawns.mixin;
 
 import dev.lambdacraft.perplayerspawns.access.InfoAccess;
 import dev.lambdacraft.perplayerspawns.access.ServerChunkManagerMixinAccess;
+import dev.lambdacraft.perplayerspawns.util.PlayerMobCountMap;
+import dev.lambdacraft.perplayerspawns.util.PlayerMobDistanceMap;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.server.network.ServerPlayerEntity;
+//import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.WorldChunk;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import java.util.logging.Logger;
 
 @Mixin(SpawnHelper.Info.class)
 public class WeirdInfoAkaGravityAndMobCapCheckingMixin implements InfoAccess {
 
-    private ServerChunkManagerMixinAccess chunkManager = null;
+    private final PlayerMobCountMap playerMobCountMap = new PlayerMobCountMap();
+    public void incrementPlayerMobCount(ServerPlayerEntity playerEntity, SpawnGroup spawnGroup) { this.playerMobCountMap.incrementPlayerMobCount(playerEntity, spawnGroup); }
 
+    //private ServerChunkManagerMixinAccess chunkManager = null;
+    //private ServerWorld world;
+    private PlayerMobDistanceMap playerDistanceMap;
     public void setChunkManager(ServerChunkManagerMixinAccess chunkManager) {
-        this.chunkManager = chunkManager;
+        //this.chunkManager = chunkManager;
+        //this.world = chunkManager.getServerWorld();
+        this.playerDistanceMap = chunkManager.getPlayerDistanceMap();
     }
 
-    @Inject(method = "isBelowCap", at = @At("HEAD"), cancellable = true)
-    private void isBelowPlayerCap(SpawnGroup group, CallbackInfoReturnable<Boolean> callbackInfoReturnable) {
-        if (
-                true
-                //&& chunkManager.Nnonspectators() >= 0
-                //&& chunkManager.getWorld().getDimension().isBedWorking()
-        ) callbackInfoReturnable.setReturnValue(chunkManager.getNOfMobsToSpawn(group) > 0);
+    @Shadow private boolean isBelowCap(SpawnGroup group) {return false;}
+
+    public boolean isBelowChunkCap(SpawnGroup spawnGroup, WorldChunk chunk) {
+        if ( // too lazy to add proper settings
+                false
+                //|| !world.getPlayers(p -> !p.isSpectator()).size() >= 2
+                //|| !world.getDimension().isBedWorking()
+        ) return isBelowCap(spawnGroup); else {
+
+            // Compute if mobs should be spawned between all players in range of chunk
+            int cap = spawnGroup.getCapacity();
+            for (ServerPlayerEntity player : playerDistanceMap.getPlayersInRange(chunk.getPos().toLong())) {
+                int mobCountNearPlayer = playerMobCountMap.getPlayerMobCount(player, spawnGroup);
+                if(cap <= mobCountNearPlayer) return false;
+            }
+            return true;
+
+        }
     }
 
-    private boolean warned = false;
+
     @Inject(method = "run", at = @At("HEAD"))
     private void addSpawnedMobToMap(MobEntity entity, Chunk chunk, CallbackInfo callbackInfo){
-        if (chunkManager != null) {
-            chunkManager.getTACS().updatePlayerMobTypeMap(entity);
-        }
-        else if (!warned) {
-            Logger.getLogger("Fabric Per Player Spawns").warning("Spawned mob from elsewhere. Are you using spawners?");
-            warned = true;
+        for (ServerPlayerEntity player : playerDistanceMap.getPlayersInRange(chunk.getPos().toLong())) {
+            // Increment player's sighting of entity
+            incrementPlayerMobCount(player, entity.getType().getSpawnGroup());
         }
     }
 

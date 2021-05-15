@@ -4,12 +4,10 @@
   "package": "dev.lambdacraft.perplayerspawns.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "MinecraftServerMixin",
-    "PlayerEntityMixin",
     "ServerChunkManagerMixin",
-    "ServerWorldMixin",
     "TACSMixin",
-    "WeirdInfoAkaGravityAndMobCapCheckingMixin"
+    "WeirdInfoAkaGravityAndMobCapCheckingMixin",
+    "SpawnHelperMixin"
   ],
   "client": [
   ],
