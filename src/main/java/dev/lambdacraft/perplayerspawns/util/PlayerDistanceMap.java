@@ -15,7 +15,7 @@ import java.util.Map;
 /**
  * @author Spottedleaf
  */
-public final class PlayerMobDistanceMap {
+public final class PlayerDistanceMap {
 
 	private static final PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity> EMPTY_SET = new PooledHashSets.PooledObjectLinkedOpenHashSet<>();
 
@@ -30,6 +30,7 @@ public final class PlayerMobDistanceMap {
 	public PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity> getPlayersInRange(final long l) {
 		return this.playerMap.getOrDefault(l, EMPTY_SET);
 	}
+	public long posMapSize() { return this.playerMap.size(); }
 
 	public void update(final List<ServerPlayerEntity> currentPlayers, final int newViewDistance) {
 
@@ -108,7 +109,7 @@ public final class PlayerMobDistanceMap {
 			if (players == null) {
 				return new PooledHashSets.PooledObjectLinkedOpenHashSet<>(player);
 			} else {
-				return PlayerMobDistanceMap.this.pooledHashSets.findMapWith(players, player);
+				return PlayerDistanceMap.this.pooledHashSets.findMapWith(players, player);
 			}
 		});
 	}
@@ -116,7 +117,7 @@ public final class PlayerMobDistanceMap {
 	private void removePlayerFrom(final ServerPlayerEntity player, final int chunkX, final int chunkZ) {
 		this.playerMap.compute(ChunkPos.toLong(chunkX, chunkZ), (final Long keyInMap, final PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity> players) -> {
 			assert players != null;
-			return PlayerMobDistanceMap.this.pooledHashSets.findMapWithout(players, player); // rets null instead of an empty map
+			return PlayerDistanceMap.this.pooledHashSets.findMapWithout(players, player); // rets null instead of an empty map
 		});
 	}
 

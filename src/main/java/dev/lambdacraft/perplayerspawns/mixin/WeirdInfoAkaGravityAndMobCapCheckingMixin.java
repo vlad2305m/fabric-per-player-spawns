@@ -3,7 +3,7 @@ package dev.lambdacraft.perplayerspawns.mixin;
 import dev.lambdacraft.perplayerspawns.access.InfoAccess;
 import dev.lambdacraft.perplayerspawns.access.ServerChunkManagerMixinAccess;
 import dev.lambdacraft.perplayerspawns.util.PlayerMobCountMap;
-import dev.lambdacraft.perplayerspawns.util.PlayerMobDistanceMap;
+import dev.lambdacraft.perplayerspawns.util.PlayerDistanceMap;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -21,11 +21,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class WeirdInfoAkaGravityAndMobCapCheckingMixin implements InfoAccess {
 
     private final PlayerMobCountMap playerMobCountMap = new PlayerMobCountMap();
+    public PlayerMobCountMap getPlayerMobCountMap() { return this.playerMobCountMap; }
     public void incrementPlayerMobCount(ServerPlayerEntity playerEntity, SpawnGroup spawnGroup) { this.playerMobCountMap.incrementPlayerMobCount(playerEntity, spawnGroup); }
 
     //private ServerChunkManagerMixinAccess chunkManager = null;
     //private ServerWorld world;
-    private PlayerMobDistanceMap playerDistanceMap;
+    private PlayerDistanceMap playerDistanceMap;
     public void setChunkManager(ServerChunkManagerMixinAccess chunkManager) {
         //this.chunkManager = chunkManager;
         //this.world = chunkManager.getServerWorld();

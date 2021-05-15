@@ -1,39 +1,26 @@
 package dev.lambdacraft.perplayerspawns.mixin;
 
-import com.mojang.datafixers.util.Either;
 import dev.lambdacraft.perplayerspawns.access.*;
-import dev.lambdacraft.perplayerspawns.util.PlayerMobDistanceMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import dev.lambdacraft.perplayerspawns.util.PlayerMobCountMap;
+import dev.lambdacraft.perplayerspawns.util.PlayerDistanceMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ChunkHolder;
 import net.minecraft.server.world.ServerChunkManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.server.world.ThreadedAnvilChunkStorage;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.GravityField;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.SpawnHelper;
-import net.minecraft.world.World;
-import net.minecraft.world.biome.SpawnSettings;
-import net.minecraft.world.chunk.WorldChunk;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-import java.util.Arrays;
 import java.util.Iterator;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
-import java.util.logging.Logger;
 
 
 @Mixin (ServerChunkManager.class)
@@ -43,8 +30,8 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 
 	@Shadow @Final public ThreadedAnvilChunkStorage threadedAnvilChunkStorage;
 
-	private final PlayerMobDistanceMap playerMobDistanceMap = new PlayerMobDistanceMap();
-	public PlayerMobDistanceMap getPlayerDistanceMap() { return playerMobDistanceMap; }
+	private final PlayerDistanceMap playerDistanceMap = new PlayerDistanceMap();
+	public PlayerDistanceMap getPlayerDistanceMap() { return playerDistanceMap; }
 
 	@Redirect(method = "tickChunks", at = @At(value = "INVOKE",
 			target = "net/minecraft/world/SpawnHelper.setupSpawn (ILjava/lang/Iterable;Lnet/minecraft/world/SpawnHelper$ChunkSource;)Lnet/minecraft/world/SpawnHelper$Info;"))
@@ -57,19 +44,19 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 			3. Loop through all world's entities and add them to player's counts
 	 	*/
 		// update distance map
-		playerMobDistanceMap.update(this.world.getPlayers(), ((TACSAccess) this.threadedAnvilChunkStorage).renderDistance());
+		playerDistanceMap.update(this.world.getPlayers(), ((TACSAccess) this.threadedAnvilChunkStorage).renderDistance());
 
 		// calculate mob counts
 
 		SpawnHelper.Info info = SpawnHelper.setupSpawn(spawningChunkCount, entities, chunkSource);
-		Iterator var5 = entities.iterator();
+		Iterator<Entity> var5 = entities.iterator();
 		out:
 		while(true) {
 			Entity entity;
 			MobEntity mobEntity;
 			do {
 				if (!var5.hasNext()) break out;
-				entity = (Entity)var5.next();
+				entity = var5.next();
 				if (!(entity instanceof MobEntity)) break;
 				mobEntity = (MobEntity)entity;
 			}
@@ -81,7 +68,7 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 				long l = ChunkPos.toLong(blockPos.getX() >> 4, blockPos.getZ() >> 4);
 				chunkSource.query(l, (worldChunk) -> {
 					// Find players in range of entity
-					for (ServerPlayerEntity player : this.playerMobDistanceMap.getPlayersInRange(l)) {
+					for (ServerPlayerEntity player : this.playerDistanceMap.getPlayersInRange(l)) {
 						// Increment player's sighting of entity
 						((InfoAccess)info).incrementPlayerMobCount(player, spawnGroup);
 					}
@@ -89,34 +76,36 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 			}
 		}
 
-		/* debugging * /
-		PlayerMobDistanceMap mobDistanceMap = tacs.playerMobDistanceMap();
-		for (PlayerEntity player : this.world.getPlayers()) {
+		/* debugging */
+
+		PlayerMobCountMap map = ((InfoAccess)info).getPlayerMobCountMap();
+		for (ServerPlayerEntity player : this.world.getPlayers()) {
 
 			//System.out.println(player.getName().asString() + ": " + Arrays.toString(((PlayerEntityAccess) player).getMobCounts()));
 			if (player.isCreative()) {
-				int x = ((int) player.getX()) / 16;
-				int z = ((int) player.getZ()) / 16;
-				PlayerEntity playerM = player;
-				int mobCountNearPlayer = ((PlayerEntityAccess) player).getMobCountForSpawnGroup(SpawnGroup.MONSTER);
-				int mobCountNearPlayerM = ((PlayerEntityAccess) player).getMobCountForSpawnGroup(SpawnGroup.MONSTER);
-				for (PlayerEntity playerN : mobDistanceMap.getPlayersInRange(x, z)) {
-					int mobCountNearPlayerN = ((PlayerEntityAccess) playerN).getMobCountForSpawnGroup(SpawnGroup.MONSTER);
+				int x = ((int) player.getX()) >> 4;
+				int z = ((int) player.getZ()) >> 4;
+				ServerPlayerEntity playerM = player;
+				int mobCountNearPlayer = map.getPlayerMobCount(player, SpawnGroup.MONSTER);
+				int mobCountNearPlayerM = map.getPlayerMobCount(playerM, SpawnGroup.MONSTER);
+				for (ServerPlayerEntity playerN : playerDistanceMap.getPlayersInRange(ChunkPos.toLong(x, z))) {
+					int mobCountNearPlayerN = map.getPlayerMobCount(playerN, SpawnGroup.MONSTER);
 					if (mobCountNearPlayerN > mobCountNearPlayerM) {
 						playerM = playerN;
 						mobCountNearPlayerM = mobCountNearPlayerN;
 					}
 				}
-				player.sendMessage(new LiteralText("You: " + mobCountNearPlayer + "; Highest here - " + playerM.getName().asString()+": "+mobCountNearPlayerM), true);
+				player.sendMessage(new LiteralText(playerDistanceMap.posMapSize() + "Chunks stored. Caps: You: " + mobCountNearPlayer + "; Highest here - " + playerM.getName().asString() + ": " + mobCountNearPlayerM), true);
 			}
 			else if(player.isSpectator()) {
 				StringBuilder str = new StringBuilder();
+				str.append(playerDistanceMap.posMapSize()).append(" Chunks stored. ");
 				str.append("Players affecting this chunk: ");
 				int x = ((int) player.getX()) / 16;
 				int z = ((int) player.getZ()) / 16;
-				for (PlayerEntity playerN : mobDistanceMap.getPlayersInRange(x, z)) {
+				for (ServerPlayerEntity playerN : playerDistanceMap.getPlayersInRange(ChunkPos.toLong(x, z))) {
 					str.append(playerN.getName().asString()).append(" ")
-							.append(((PlayerEntityAccess) playerN).getMobCountForSpawnGroup(SpawnGroup.MONSTER)).append(", ");
+							.append(map.getPlayerMobCount(playerN, SpawnGroup.MONSTER)).append(", ");
 				}
 				player.sendMessage(new LiteralText(str.toString()), true);
 			}
@@ -126,7 +115,7 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 				plF.createNewFile();
 				System.out.println(gson.toJson(player));
 				System.out.println(gson.toJson(mobDistanceMap));
-			}* /
+			}*/
 		}
 		/**/
 
