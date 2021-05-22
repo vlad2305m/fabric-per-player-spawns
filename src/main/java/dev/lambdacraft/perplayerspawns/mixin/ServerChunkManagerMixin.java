@@ -76,7 +76,7 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 			}
 		}
 
-		/* debugging */
+		/* debugging * /
 
 		PlayerMobCountMap map = ((InfoAccess)info).getPlayerMobCountMap();
 		for (ServerPlayerEntity player : this.world.getPlayers()) {
@@ -109,13 +109,13 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 				}
 				player.sendMessage(new LiteralText(str.toString()), true);
 			}
-			/*if(player.isCreative() && player.isOnFire() && player.isSneaking() && player.isHolding(Items.STRUCTURE_VOID)){
-				Gson gson = new GsonBuilder().create();
-				File plF = new File("playerDump.txt");
-				plF.createNewFile();
-				System.out.println(gson.toJson(player));
-				System.out.println(gson.toJson(mobDistanceMap));
-			}*/
+			//if(player.isCreative() && player.isOnFire() && player.isSneaking() && player.isHolding(Items.STRUCTURE_VOID)){
+			//	Gson gson = new GsonBuilder().create();
+			//	File plF = new File("playerDump.txt");
+			//	plF.createNewFile();
+			//	System.out.println(gson.toJson(player));
+			//	System.out.println(gson.toJson(mobDistanceMap));
+			//}
 		}
 		/**/
 
