@@ -24,11 +24,9 @@ public class WeirdInfoAkaGravityAndMobCapCheckingMixin implements InfoAccess {
     public PlayerMobCountMap getPlayerMobCountMap() { return this.playerMobCountMap; }
     public void incrementPlayerMobCount(ServerPlayerEntity playerEntity, SpawnGroup spawnGroup) { this.playerMobCountMap.incrementPlayerMobCount(playerEntity, spawnGroup); }
 
-    //private ServerChunkManagerMixinAccess chunkManager = null;
     //private ServerWorld world;
     private PlayerDistanceMap playerDistanceMap;
     public void setChunkManager(ServerChunkManagerMixinAccess chunkManager) {
-        //this.chunkManager = chunkManager;
         //this.world = chunkManager.getServerWorld();
         this.playerDistanceMap = chunkManager.getPlayerDistanceMap();
     }
@@ -36,11 +34,9 @@ public class WeirdInfoAkaGravityAndMobCapCheckingMixin implements InfoAccess {
     @Shadow private boolean isBelowCap(SpawnGroup group) {return false;}
 
     public boolean isBelowChunkCap(SpawnGroup spawnGroup, WorldChunk chunk) {
-        if ( // too lazy to add proper settings
-                false
-                //|| !world.getPlayers(p -> !p.isSpectator()).size() >= 2
-                //|| !world.getDimension().isBedWorking()
-        ) return isBelowCap(spawnGroup); else {
+        //if ( // too lazy to add proper settings
+        //        !world.getPlayers(p -> !p.isSpectator()).size() >= 2
+        //) return isBelowCap(spawnGroup); else {
 
             // Compute if mobs should be spawned between all players in range of chunk
             int cap = spawnGroup.getCapacity();
@@ -50,7 +46,7 @@ public class WeirdInfoAkaGravityAndMobCapCheckingMixin implements InfoAccess {
             }
             return true;
 
-        }
+        //}
     }
 
 

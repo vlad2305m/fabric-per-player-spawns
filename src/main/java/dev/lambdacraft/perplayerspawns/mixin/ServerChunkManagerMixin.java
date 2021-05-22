@@ -1,7 +1,6 @@
 package dev.lambdacraft.perplayerspawns.mixin;
 
 import dev.lambdacraft.perplayerspawns.access.*;
-import dev.lambdacraft.perplayerspawns.util.PlayerMobCountMap;
 import dev.lambdacraft.perplayerspawns.util.PlayerDistanceMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.SpawnGroup;
@@ -10,7 +9,6 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerChunkManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.server.world.ThreadedAnvilChunkStorage;
-import net.minecraft.text.LiteralText;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.SpawnHelper;
@@ -22,17 +20,20 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.Iterator;
 
+//import dev.lambdacraft.perplayerspawns.util.PlayerMobCountMap;
+//import net.minecraft.text.LiteralText;
 
 @Mixin (ServerChunkManager.class)
 public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 	@Shadow @Final private ServerWorld world;
-	public ServerWorld getServerWorld() { return this.world; }
+	//public ServerWorld getServerWorld() { return this.world; }
 
 	@Shadow @Final public ThreadedAnvilChunkStorage threadedAnvilChunkStorage;
 
 	private final PlayerDistanceMap playerDistanceMap = new PlayerDistanceMap();
 	public PlayerDistanceMap getPlayerDistanceMap() { return playerDistanceMap; }
 
+	@SuppressWarnings("UnresolvedMixinReference")
 	@Redirect(method = "tickChunks", at = @At(value = "INVOKE",
 			target = "net/minecraft/world/SpawnHelper.setupSpawn (ILjava/lang/Iterable;Lnet/minecraft/world/SpawnHelper$ChunkSource;)Lnet/minecraft/world/SpawnHelper$Info;"))
 	private SpawnHelper.Info setupSpawning(int spawningChunkCount, Iterable<Entity> entities, SpawnHelper.ChunkSource chunkSource){

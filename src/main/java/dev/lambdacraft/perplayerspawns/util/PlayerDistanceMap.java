@@ -30,7 +30,7 @@ public final class PlayerDistanceMap {
 	public PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity> getPlayersInRange(final long l) {
 		return this.playerMap.getOrDefault(l, EMPTY_SET);
 	}
-	public long posMapSize() { return this.playerMap.size(); }
+	//public long posMapSize() { return this.playerMap.size(); }
 
 	public void update(final List<ServerPlayerEntity> currentPlayers, final int newViewDistance) {
 
@@ -157,6 +157,14 @@ public final class PlayerDistanceMap {
 			// and on the right the "added" section.
 			// https://i.imgur.com/MrnOBgI.png is a reference image. Note that the outside border is not actually
 			// exclusive to the regions they surround.
+			// ▓ → █ (distance = 3)
+			// ▒ - player stored; ░ - player not stored
+			// ▒ ▒ ▒ ▒ ▒
+			// ▒ ▒ ▒ ▒ ▒ ░ ░
+			// ▒ ▒ ▓ ▒ ▒ ░ ░
+			// ▒ ▒ ▒ ▒ █ ░ ░
+			// ▒ ▒ ▒ ▒ ▒ ░ ░
+			//     ░ ░ ░ ░ ░
 
 			// 4 points of the rectangle
 			int maxX; // exclusive
@@ -166,6 +174,12 @@ public final class PlayerDistanceMap {
 
 			if (dx != 0) {
 				// handle right addition
+				// ▒ ▒ ▒ ▒ ▒
+				// ▒ ▒ ▒ ▒ ▒ + +
+				// ▒ ▒ ▓ ▒ ▒ + +
+				// ▒ ▒ ▒ ▒ █ + +
+				// ▒ ▒ ▒ ▒ ▒ + +
+				//     ░ ░ ░ ░ ░
 
 				maxX = toX + (oldViewDistance * right) + right; // exclusive
 				minX = fromX + (oldViewDistance * right) + right; // inclusive
@@ -181,6 +195,12 @@ public final class PlayerDistanceMap {
 
 			if (dz != 0) {
 				// handle up addition
+				// ▒ ▒ ▒ ▒ ▒
+				// ▒ ▒ ▒ ▒ ▒ ▒ ▒
+				// ▒ ▒ ▓ ▒ ▒ ▒ ▒
+				// ▒ ▒ ▒ ▒ █ ▒ ▒
+				// ▒ ▒ ▒ ▒ ▒ ▒ ▒
+				//     + + + + +
 
 				maxX = toX + (oldViewDistance * right) + right; // exclusive
 				minX = toX - (oldViewDistance * right); // inclusive
@@ -196,6 +216,12 @@ public final class PlayerDistanceMap {
 
 			if (dx != 0) {
 				// handle left removal
+				// ▒ ▒ ▒ ▒ ▒
+				// - - ▒ ▒ ▒ ▒ ▒
+				// - - ▓ ▒ ▒ ▒ ▒
+				// - - ▒ ▒ █ ▒ ▒
+				// - - ▒ ▒ ▒ ▒ ▒
+				//     ▒ ▒ ▒ ▒ ▒
 
 				maxX = toX - (oldViewDistance * right); // exclusive
 				minX = fromX - (oldViewDistance * right); // inclusive
@@ -211,6 +237,12 @@ public final class PlayerDistanceMap {
 
 			if (dz != 0) {
 				// handle down removal
+				// - - - - -
+				// ░ ░ ▒ ▒ ▒ ▒ ▒
+				// ░ ░ ▓ ▒ ▒ ▒ ▒
+				// ░ ░ ▒ ▒ █ ▒ ▒
+				// ░ ░ ▒ ▒ ▒ ▒ ▒
+				//     ▒ ▒ ▒ ▒ ▒
 
 				maxX = fromX + (oldViewDistance * right) + right; // exclusive
 				minX = fromX - (oldViewDistance * right); // inclusive
@@ -223,6 +255,12 @@ public final class PlayerDistanceMap {
 					}
 				}
 			}
+			// ░ ░ ░ ░ ░
+			// ░ ░ ▒ ▒ ▒ ▒ ▒
+			// ░ ░ ▓ ▒ ▒ ▒ ▒
+			// ░ ░ ▒ ▒ █ ▒ ▒
+			// ░ ░ ▒ ▒ ▒ ▒ ▒
+			//     ▒ ▒ ▒ ▒ ▒
 		} else {
 			// different view distance
 			// for now :)
