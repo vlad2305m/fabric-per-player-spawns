@@ -12,4 +12,4 @@ Forked from Lambdacraft because he went afk.
 
 I rewired the mixins to work with 1.16.5, and then just rewrote that part of the mod as I see fit.
 
-https://www.curseforge.com/minecraft/mc-mods/fabric-per-player-spawns
+[This on CurseForge](https://www.curseforge.com/minecraft/mc-mods/fabric-per-player-spawns)
