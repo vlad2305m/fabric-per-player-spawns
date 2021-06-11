@@ -30,7 +30,7 @@ public final class PlayerDistanceMap {
 	public PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity> getPlayersInRange(final long l) {
 		return this.playerMap.getOrDefault(l, EMPTY_SET);
 	}
-	//public long posMapSize() { return this.playerMap.size(); }
+	public long posMapSize() { return this.playerMap.size(); }
 
 	public void update(final List<ServerPlayerEntity> currentPlayers, final int newViewDistance) {
 
@@ -46,7 +46,7 @@ public final class PlayerDistanceMap {
 
 			gone.remove(player);
 
-			final ChunkSectionPos newPosition = player.getCameraPosition();
+			final ChunkSectionPos newPosition = player.getWatchedSection();
 			final ChunkSectionPos oldPosition = this.players.put(player, newPosition);
 
 			if (oldPosition == null) {

@@ -13,8 +13,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public class SpawnHelperMixin {
 
     // My way to ensure chunk is right
-    @SuppressWarnings("UnresolvedMixinReference")
-    @Redirect(method = "spawn", at = @At(value = "INVOKE", target = "net/minecraft/world/SpawnHelper$Info.method_27829 (Lnet/minecraft/world/SpawnHelper$Info;Lnet/minecraft/entity/SpawnGroup;)Z"))
+    @Redirect(method = "spawn", at = @At(value = "INVOKE", target = "net/minecraft/world/SpawnHelper$Info.isBelowCap (Lnet/minecraft/entity/SpawnGroup;)Z"))
     private static boolean isBelowChunkCap(SpawnHelper.Info info, SpawnGroup spawnGroup, ServerWorld world, WorldChunk chunk){
         return ((InfoAccess)info).isBelowChunkCap(spawnGroup, chunk);
     }
