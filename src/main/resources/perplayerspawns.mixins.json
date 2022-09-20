@@ -6,7 +6,7 @@
   "mixins": [
     "ServerChunkManagerMixin",
     "TACSMixin",
-    "WeirdInfoAkaGravityAndMobCapCheckingMixin",
+    "InnerInfoMixin",
     "SpawnHelperMixin"
   ],
   "client": [

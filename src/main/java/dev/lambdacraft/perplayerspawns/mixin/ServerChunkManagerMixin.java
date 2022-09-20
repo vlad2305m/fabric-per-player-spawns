@@ -2,26 +2,31 @@ package dev.lambdacraft.perplayerspawns.mixin;
 
 import dev.lambdacraft.perplayerspawns.access.*;
 import dev.lambdacraft.perplayerspawns.util.PlayerDistanceMap;
+import dev.lambdacraft.perplayerspawns.util.PlayerMobCountMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.item.Items;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerChunkManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.server.world.ThreadedAnvilChunkStorage;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.profiler.Profiler;
 import net.minecraft.world.SpawnHelper;
+import net.minecraft.world.WorldProperties;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.Iterator;
 
-//import dev.lambdacraft.perplayerspawns.util.PlayerMobCountMap;
-//import net.minecraft.text.LiteralText;
 
 @Mixin (ServerChunkManager.class)
 public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
@@ -33,10 +38,10 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 	private final PlayerDistanceMap playerDistanceMap = new PlayerDistanceMap();
 	public PlayerDistanceMap getPlayerDistanceMap() { return playerDistanceMap; }
 
-	@SuppressWarnings("UnresolvedMixinReference")
-	@Redirect(method = "tickChunks", at = @At(value = "INVOKE",
-			target = "net/minecraft/world/SpawnHelper.setupSpawn (ILjava/lang/Iterable;Lnet/minecraft/world/SpawnHelper$ChunkSource;)Lnet/minecraft/world/SpawnHelper$Info;"))
-	private SpawnHelper.Info setupSpawning(int spawningChunkCount, Iterable<Entity> entities, SpawnHelper.ChunkSource chunkSource){
+	@SuppressWarnings({"UnresolvedMixinReference", "InvalidInjectorMethodSignature"})
+	@Inject(method = "tickChunks", at = @At(value = "INVOKE_ASSIGN",
+			target = "Lnet/minecraft/world/SpawnHelper;setupSpawn(ILjava/lang/Iterable;Lnet/minecraft/world/SpawnHelper$ChunkSource;Lnet/minecraft/world/SpawnDensityCapper;)Lnet/minecraft/world/SpawnHelper$Info;"), locals = LocalCapture.CAPTURE_FAILHARD)
+	private void setupSpawning(CallbackInfo ci, long l, long m, WorldProperties worldProperties, Profiler profiler, int i, boolean bl2, int j, SpawnHelper.Info info){
 
 		/*
 			Every all-chunks tick:
@@ -46,11 +51,10 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 	 	*/
 		// update distance map
 		playerDistanceMap.update(this.world.getPlayers(), ((TACSAccess) this.threadedAnvilChunkStorage).renderDistance());
+		((InfoAccess)info).setChunkManager(this);
 
 		// calculate mob counts
-
-		SpawnHelper.Info info = SpawnHelper.setupSpawn(spawningChunkCount, entities, chunkSource);
-		Iterator<Entity> var5 = entities.iterator();
+		Iterator<Entity> var5 = world.iterateEntities().iterator();
 		out:
 		while(true) {
 			Entity entity;
@@ -66,21 +70,20 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 			SpawnGroup spawnGroup = entity.getType().getSpawnGroup();
 			if (spawnGroup != SpawnGroup.MISC) {
 				BlockPos blockPos = entity.getBlockPos();
-				long l = ChunkPos.toLong(blockPos.getX() >> 4, blockPos.getZ() >> 4);
-				chunkSource.query(l, (worldChunk) -> {
+				long ll = ChunkPos.toLong(blockPos.getX() >> 4, blockPos.getZ() >> 4);
 					// Find players in range of entity
-					for (ServerPlayerEntity player : this.playerDistanceMap.getPlayersInRange(l)) {
+					for (ServerPlayerEntity player : this.playerDistanceMap.getPlayersInRange(ll)) {
 						// Increment player's sighting of entity
 						((InfoAccess)info).incrementPlayerMobCount(player, spawnGroup);
-					}
-				});
+				}
 			}
 		}
 
-		/* debugging * /
+		/* debugging */
 
 		PlayerMobCountMap map = ((InfoAccess)info).getPlayerMobCountMap();
 		for (ServerPlayerEntity player : this.world.getPlayers()) {
+			if(!player.getMainHandStack().isOf(Items.GLISTERING_MELON_SLICE)) continue;
 
 			//System.out.println(player.getName().asString() + ": " + Arrays.toString(((PlayerEntityAccess) player).getMobCounts()));
 			if (player.isCreative()) {
@@ -96,7 +99,7 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 						mobCountNearPlayerM = mobCountNearPlayerN;
 					}
 				}
-				player.sendMessage(new LiteralText(playerDistanceMap.posMapSize() + "Chunks stored. Caps: You: " + mobCountNearPlayer + "; Highest here - " + playerM.getName().asString() + ": " + mobCountNearPlayerM), true);
+				player.sendMessage(Text.literal(playerDistanceMap.posMapSize() + "Chunks stored. Caps: You: " + mobCountNearPlayer + "; Highest here - " + playerM.getName().getString() + ": " + mobCountNearPlayerM), true);
 			}
 			else if(player.isSpectator()) {
 				StringBuilder str = new StringBuilder();
@@ -105,10 +108,10 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 				int x = ((int) player.getX()) / 16;
 				int z = ((int) player.getZ()) / 16;
 				for (ServerPlayerEntity playerN : playerDistanceMap.getPlayersInRange(ChunkPos.toLong(x, z))) {
-					str.append(playerN.getName().asString()).append(" ")
+					str.append(playerN.getName().getString()).append(" ")
 							.append(map.getPlayerMobCount(playerN, SpawnGroup.MONSTER)).append(", ");
 				}
-				player.sendMessage(new LiteralText(str.toString()), true);
+				player.sendMessage(Text.literal(str.toString()), true);
 			}
 			//if(player.isCreative() && player.isOnFire() && player.isSneaking() && player.isHolding(Items.STRUCTURE_VOID)){
 			//	Gson gson = new GsonBuilder().create();
@@ -120,8 +123,7 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 		}
 		/**/
 
-		((InfoAccess)info).setChunkManager(this);
-		return info;
+
 	}
 
 }

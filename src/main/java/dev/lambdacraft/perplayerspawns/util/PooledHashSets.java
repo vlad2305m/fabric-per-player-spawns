@@ -234,7 +234,7 @@ public class PooledHashSets<E> {
         @Override
         public String toString() {
             return "PooledHashSet: size: " + this.set.size() + ", reference count: " + this.referenceCount + ", hash: " +
-                this.hashCode() + ", identity: " + System.identityHashCode(this) + " map: " + this.set.toString();
+                    this.hashCode() + ", identity: " + System.identityHashCode(this) + " map: " + this.set.toString();
         }
     }
 }

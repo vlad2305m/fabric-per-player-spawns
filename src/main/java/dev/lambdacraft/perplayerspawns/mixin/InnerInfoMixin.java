@@ -8,6 +8,7 @@ import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 //import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.WorldChunk;
@@ -18,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(SpawnHelper.Info.class)
-public class WeirdInfoAkaGravityAndMobCapCheckingMixin implements InfoAccess {
+public class InnerInfoMixin implements InfoAccess {
 
     private final PlayerMobCountMap playerMobCountMap = new PlayerMobCountMap();
     public PlayerMobCountMap getPlayerMobCountMap() { return this.playerMobCountMap; }
@@ -31,20 +32,18 @@ public class WeirdInfoAkaGravityAndMobCapCheckingMixin implements InfoAccess {
         this.playerDistanceMap = chunkManager.getPlayerDistanceMap();
     }
 
-    @Shadow private boolean isBelowCap(SpawnGroup group) {return false;}
-
-    public boolean isBelowChunkCap(SpawnGroup spawnGroup, WorldChunk chunk) {
+    public int isBelowChunkCap(SpawnGroup spawnGroup, ChunkPos chunk) {
         //if ( // too lazy to add proper settings
         //        !world.getPlayers(p -> !p.isSpectator()).size() >= 2
         //) return isBelowCap(spawnGroup); else {
 
             // Compute if mobs should be spawned between all players in range of chunk
             int cap = spawnGroup.getCapacity();
-            for (ServerPlayerEntity player : playerDistanceMap.getPlayersInRange(chunk.getPos().toLong())) {
+            for (ServerPlayerEntity player : playerDistanceMap.getPlayersInRange(chunk.toLong())) {
                 int mobCountNearPlayer = playerMobCountMap.getPlayerMobCount(player, spawnGroup);
-                if(cap <= mobCountNearPlayer) return false;
+                if(cap <= mobCountNearPlayer) return Integer.MAX_VALUE;
             }
-            return true;
+            return 0;
 
         //}
     }
