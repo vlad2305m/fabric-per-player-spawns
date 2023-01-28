@@ -13,3 +13,5 @@ Forked from Lambdacraft because he went afk.
 I rewired the mixins to work with 1.16.5, and then just rewrote that part of the mod as I see fit.
 
 [This on CurseForge](https://www.curseforge.com/minecraft/mc-mods/fabric-per-player-spawns)
+
+<a href='https://ko-fi.com/M4M4I866V' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi1.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
