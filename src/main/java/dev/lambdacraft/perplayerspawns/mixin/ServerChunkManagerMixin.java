@@ -99,7 +99,7 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 						mobCountNearPlayerM = mobCountNearPlayerN;
 					}
 				}
-				player.sendMessage(Text.literal(playerDistanceMap.posMapSize() + "Chunks stored. Caps: You: " + mobCountNearPlayer + "; Highest here - " + playerM.getName().getString() + ": " + mobCountNearPlayerM), true);
+				player.sendMessage(Text.literal(playerDistanceMap.posMapSize() + " Chunks stored. Caps: You: " + mobCountNearPlayer + "; Highest here - " + playerM.getName().getString() + ": " + mobCountNearPlayerM), true);
 			}
 			else if(player.isSpectator()) {
 				StringBuilder str = new StringBuilder();
