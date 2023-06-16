@@ -41,7 +41,7 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 	@SuppressWarnings({"UnresolvedMixinReference", "InvalidInjectorMethodSignature"})
 	@Inject(method = "tickChunks", at = @At(value = "INVOKE_ASSIGN",
 			target = "Lnet/minecraft/world/SpawnHelper;setupSpawn(ILjava/lang/Iterable;Lnet/minecraft/world/SpawnHelper$ChunkSource;Lnet/minecraft/world/SpawnDensityCapper;)Lnet/minecraft/world/SpawnHelper$Info;"), locals = LocalCapture.CAPTURE_FAILHARD)
-	private void setupSpawning(CallbackInfo ci, long l, long m, WorldProperties worldProperties, Profiler profiler, int i, boolean bl2, int j, SpawnHelper.Info info){
+	private void setupSpawning(CallbackInfo ci, long l, long m, boolean n, WorldProperties worldProperties, Profiler profiler, int i, boolean bl2, int j, SpawnHelper.Info info){
 
 		/*
 			Every all-chunks tick:
