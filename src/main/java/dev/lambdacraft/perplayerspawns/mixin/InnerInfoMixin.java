@@ -7,19 +7,23 @@ import dev.lambdacraft.perplayerspawns.util.PlayerDistanceMap;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
-//import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.WorldChunk;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(SpawnHelper.Info.class)
 public class InnerInfoMixin implements InfoAccess {
+
+    // My way to ensure chunk is right
+    @Inject(method = "canSpawn", at = @At("HEAD"), cancellable = true)
+    private void canSpawnInChunkDueToPerPlayerCaps(SpawnGroup group, ChunkPos chunkPos, CallbackInfoReturnable<Boolean> cir){
+        if (this.isAboveChunkCap(group, chunkPos)) cir.setReturnValue(false);
+    }
 
     private final PlayerMobCountMap playerMobCountMap = new PlayerMobCountMap();
     public PlayerMobCountMap getPlayerMobCountMap() { return this.playerMobCountMap; }
@@ -29,10 +33,10 @@ public class InnerInfoMixin implements InfoAccess {
     private PlayerDistanceMap playerDistanceMap;
     public void setChunkManager(ServerChunkManagerMixinAccess chunkManager) {
         //this.world = chunkManager.getServerWorld();
-        this.playerDistanceMap = chunkManager.getPlayerDistanceMap();
+        this.playerDistanceMap = chunkManager.fabric_per_player_spawns$getPlayerDistanceMap();
     }
 
-    public int isBelowChunkCap(SpawnGroup spawnGroup, ChunkPos chunk) {
+    public boolean isAboveChunkCap(SpawnGroup spawnGroup, ChunkPos chunk) {
         //if ( // too lazy to add proper settings
         //        !world.getPlayers(p -> !p.isSpectator()).size() >= 2
         //) return isBelowCap(spawnGroup); else {
@@ -41,9 +45,10 @@ public class InnerInfoMixin implements InfoAccess {
             int cap = spawnGroup.getCapacity();
             for (ServerPlayerEntity player : playerDistanceMap.getPlayersInRange(chunk.toLong())) {
                 int mobCountNearPlayer = playerMobCountMap.getPlayerMobCount(player, spawnGroup);
-                if(cap <= mobCountNearPlayer) return Integer.MAX_VALUE;
+                //System.out.println("!!!"+spawnGroup.getName()+" :"+mobCountNearPlayer+"/"+cap);
+                if(cap <= mobCountNearPlayer) return true;
             }
-            return 0;
+            return false;
 
         //}
     }

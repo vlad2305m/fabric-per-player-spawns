@@ -8,24 +8,27 @@ import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.item.Items;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ChunkTicketManager;
 import net.minecraft.server.world.ServerChunkManager;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.server.world.ThreadedAnvilChunkStorage;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.WorldProperties;
+import net.minecraft.world.chunk.WorldChunk;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.Iterator;
+import java.util.List;
 
 
 @Mixin (ServerChunkManager.class)
@@ -33,15 +36,16 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 	@Shadow @Final private ServerWorld world;
 	//public ServerWorld getServerWorld() { return this.world; }
 
-	@Shadow @Final public ThreadedAnvilChunkStorage threadedAnvilChunkStorage;
+	@Shadow @Final private ChunkTicketManager ticketManager;
 
+	@Unique
 	private final PlayerDistanceMap playerDistanceMap = new PlayerDistanceMap();
-	public PlayerDistanceMap getPlayerDistanceMap() { return playerDistanceMap; }
+	public PlayerDistanceMap fabric_per_player_spawns$getPlayerDistanceMap() { return playerDistanceMap; }
 
-	@SuppressWarnings({"UnresolvedMixinReference", "InvalidInjectorMethodSignature"})
-	@Inject(method = "tickChunks", at = @At(value = "INVOKE_ASSIGN",
+	@SuppressWarnings({"InvalidInjectorMethodSignature"})
+	@Inject(method = "tickChunks(Lnet/minecraft/util/profiler/Profiler;JLjava/util/List;)V", at = @At(value = "INVOKE_ASSIGN",
 			target = "Lnet/minecraft/world/SpawnHelper;setupSpawn(ILjava/lang/Iterable;Lnet/minecraft/world/SpawnHelper$ChunkSource;Lnet/minecraft/world/SpawnDensityCapper;)Lnet/minecraft/world/SpawnHelper$Info;"), locals = LocalCapture.CAPTURE_FAILHARD)
-	private void setupSpawning(CallbackInfo ci, long l, long m, boolean n, WorldProperties worldProperties, Profiler profiler, int i, boolean bl2, int j, SpawnHelper.Info info){
+	private void setupSpawning(Profiler profiler, long timeDelta, List<WorldChunk> chunks, CallbackInfo ci, int i, SpawnHelper.Info info){
 
 		/*
 			Every all-chunks tick:
@@ -50,7 +54,7 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 			3. Loop through all world's entities and add them to player's counts
 	 	*/
 		// update distance map
-		playerDistanceMap.update(this.world.getPlayers(), ((TACSAccess) this.threadedAnvilChunkStorage).renderDistance());
+		playerDistanceMap.update(this.world.getPlayers(), ((TACSAccess) this.ticketManager).simulationDistance());
 		((InfoAccess)info).setChunkManager(this);
 
 		// calculate mob counts

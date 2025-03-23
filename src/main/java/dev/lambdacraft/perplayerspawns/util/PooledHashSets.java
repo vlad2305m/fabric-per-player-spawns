@@ -2,6 +2,8 @@ package dev.lambdacraft.perplayerspawns.util;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import org.jetbrains.annotations.NotNull;
+
 import java.lang.ref.WeakReference;
 import java.util.Iterator;
 
@@ -195,7 +197,7 @@ public class PooledHashSets<E> {
             return added;
         }
 
-        boolean remove(Object element) {
+        boolean remove(E element) {
             boolean removed = this.set.remove(element);
 
             if (removed) {
@@ -206,7 +208,7 @@ public class PooledHashSets<E> {
         }
 
         @Override
-        public Iterator<E> iterator() {
+        public @NotNull Iterator<E> iterator() {
             return this.set.iterator();
         }
 
@@ -227,7 +229,7 @@ public class PooledHashSets<E> {
                     // Unfortunately we are never equal to our own instance while in use!
                     return false;
                 }
-                return this.hash == ((PooledObjectLinkedOpenHashSet)other).hash && this.set.equals(((PooledObjectLinkedOpenHashSet)other).set);
+                return this.hash == ((PooledObjectLinkedOpenHashSet<?>)other).hash && this.set.equals(((PooledObjectLinkedOpenHashSet<?>)other).set);
             }
         }
 

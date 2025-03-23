@@ -5,5 +5,5 @@ import dev.lambdacraft.perplayerspawns.util.PlayerDistanceMap;
 
 public interface ServerChunkManagerMixinAccess {
     //ServerWorld getServerWorld();
-    PlayerDistanceMap getPlayerDistanceMap();
+    PlayerDistanceMap fabric_per_player_spawns$getPlayerDistanceMap();
 }
