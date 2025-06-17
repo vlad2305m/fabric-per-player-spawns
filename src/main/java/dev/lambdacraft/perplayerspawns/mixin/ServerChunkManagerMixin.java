@@ -42,7 +42,7 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 	public PlayerDistanceMap fabric_per_player_spawns$getPlayerDistanceMap() { return playerDistanceMap; }
 
 	@SuppressWarnings({"InvalidInjectorMethodSignature"})
-	@Inject(method = "tickChunks(Lnet/minecraft/util/profiler/Profiler;JLjava/util/List;)V", at = @At(value = "INVOKE_ASSIGN",
+	@Inject(method = "tickChunks(Lnet/minecraft/util/profiler/Profiler;J)V", at = @At(value = "INVOKE_ASSIGN",
 			target = "Lnet/minecraft/world/SpawnHelper;setupSpawn(ILjava/lang/Iterable;Lnet/minecraft/world/SpawnHelper$ChunkSource;Lnet/minecraft/world/SpawnDensityCapper;)Lnet/minecraft/world/SpawnHelper$Info;"), locals = LocalCapture.CAPTURE_FAILHARD)
 	private void setupSpawning(Profiler profiler, long timeDelta, List<WorldChunk> chunks, CallbackInfo ci, int i, SpawnHelper.Info info){
 
