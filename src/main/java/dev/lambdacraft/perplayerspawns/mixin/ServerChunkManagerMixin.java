@@ -16,7 +16,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.world.SpawnHelper;
-import net.minecraft.world.WorldProperties;
 import net.minecraft.world.chunk.WorldChunk;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -55,7 +54,7 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 	 	*/
 		// update distance map
 		playerDistanceMap.update(this.world.getPlayers(), ((TACSAccess) this.ticketManager).simulationDistance());
-		((InfoAccess)info).setChunkManager(this);
+		((InfoAccess)info).fabric_per_player_spawns$setChunkManager(this);
 
 		// calculate mob counts
 		Iterator<Entity> var5 = world.iterateEntities().iterator();
@@ -78,14 +77,14 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 					// Find players in range of entity
 					for (ServerPlayerEntity player : this.playerDistanceMap.getPlayersInRange(ll)) {
 						// Increment player's sighting of entity
-						((InfoAccess)info).incrementPlayerMobCount(player, spawnGroup);
+						((InfoAccess)info).fabric_per_player_spawns$incrementPlayerMobCount(player, spawnGroup);
 				}
 			}
 		}
 
 		/* debugging */
 
-		PlayerMobCountMap map = ((InfoAccess)info).getPlayerMobCountMap();
+		PlayerMobCountMap map = ((InfoAccess)info).fabric_per_player_spawns$getPlayerMobCountMap();
 		for (ServerPlayerEntity player : this.world.getPlayers()) {
 			if(!player.getMainHandStack().isOf(Items.GLISTERING_MELON_SLICE)) continue;
 
