@@ -11,6 +11,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.chunk.Chunk;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -22,22 +23,24 @@ public class InnerInfoMixin implements InfoAccess {
     // My way to ensure chunk is right
     @Inject(method = "canSpawn", at = @At("HEAD"), cancellable = true)
     private void canSpawnInChunkDueToPerPlayerCaps(SpawnGroup group, ChunkPos chunkPos, CallbackInfoReturnable<Boolean> cir){
-        if (this.isAboveChunkCap(group, chunkPos)) cir.setReturnValue(false);
+        if (this.fabric_per_player_spawns$isAboveChunkCap(group, chunkPos)) cir.setReturnValue(false);
     }
 
+    @Unique
     private final PlayerMobCountMap playerMobCountMap = new PlayerMobCountMap();
-    public PlayerMobCountMap getPlayerMobCountMap() { return this.playerMobCountMap; }
-    public void incrementPlayerMobCount(ServerPlayerEntity playerEntity, SpawnGroup spawnGroup) { this.playerMobCountMap.incrementPlayerMobCount(playerEntity, spawnGroup); }
+    public PlayerMobCountMap fabric_per_player_spawns$getPlayerMobCountMap() { return this.playerMobCountMap; }
+    public void fabric_per_player_spawns$incrementPlayerMobCount(ServerPlayerEntity playerEntity, SpawnGroup spawnGroup) { this.playerMobCountMap.incrementPlayerMobCount(playerEntity, spawnGroup); }
 
     //private ServerWorld world;
+    @Unique
     private PlayerDistanceMap playerDistanceMap;
-    public void setChunkManager(ServerChunkManagerMixinAccess chunkManager) {
+    public void fabric_per_player_spawns$setChunkManager(ServerChunkManagerMixinAccess chunkManager) {
         //this.world = chunkManager.getServerWorld();
         this.playerDistanceMap = chunkManager.fabric_per_player_spawns$getPlayerDistanceMap();
     }
 
-    public boolean isAboveChunkCap(SpawnGroup spawnGroup, ChunkPos chunk) {
-        //if ( // too lazy to add proper settings
+    public boolean fabric_per_player_spawns$isAboveChunkCap(SpawnGroup spawnGroup, ChunkPos chunk) {
+        //if (// too lazy to add proper settings
         //        !world.getPlayers(p -> !p.isSpectator()).size() >= 2
         //) return isBelowCap(spawnGroup); else {
 
@@ -58,7 +61,7 @@ public class InnerInfoMixin implements InfoAccess {
     private void addSpawnedMobToMap(MobEntity entity, Chunk chunk, CallbackInfo callbackInfo){
         for (ServerPlayerEntity player : playerDistanceMap.getPlayersInRange(chunk.getPos().toLong())) {
             // Increment player's sighting of entity
-            incrementPlayerMobCount(player, entity.getType().getSpawnGroup());
+            fabric_per_player_spawns$incrementPlayerMobCount(player, entity.getType().getSpawnGroup());
         }
     }
 

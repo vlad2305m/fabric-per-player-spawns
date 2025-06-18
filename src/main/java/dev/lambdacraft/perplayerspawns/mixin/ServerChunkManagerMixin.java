@@ -8,6 +8,7 @@ import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.item.Items;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ChunkLevelManager;
 import net.minecraft.server.world.ChunkTicketManager;
 import net.minecraft.server.world.ServerChunkManager;
 import net.minecraft.server.world.ServerWorld;
@@ -16,8 +17,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.world.SpawnHelper;
-import net.minecraft.world.WorldProperties;
-import net.minecraft.world.chunk.WorldChunk;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -28,7 +27,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.Iterator;
-import java.util.List;
 
 
 @Mixin (ServerChunkManager.class)
@@ -38,14 +36,15 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 
 	@Shadow @Final private ChunkTicketManager ticketManager;
 
+	@Shadow @Final private ChunkLevelManager levelManager;
 	@Unique
 	private final PlayerDistanceMap playerDistanceMap = new PlayerDistanceMap();
 	public PlayerDistanceMap fabric_per_player_spawns$getPlayerDistanceMap() { return playerDistanceMap; }
 
 	@SuppressWarnings({"InvalidInjectorMethodSignature"})
-	@Inject(method = "tickChunks(Lnet/minecraft/util/profiler/Profiler;JLjava/util/List;)V", at = @At(value = "INVOKE_ASSIGN",
+	@Inject(method = "tickChunks(Lnet/minecraft/util/profiler/Profiler;J)V", at = @At(value = "INVOKE_ASSIGN",
 			target = "Lnet/minecraft/world/SpawnHelper;setupSpawn(ILjava/lang/Iterable;Lnet/minecraft/world/SpawnHelper$ChunkSource;Lnet/minecraft/world/SpawnDensityCapper;)Lnet/minecraft/world/SpawnHelper$Info;"), locals = LocalCapture.CAPTURE_FAILHARD)
-	private void setupSpawning(Profiler profiler, long timeDelta, List<WorldChunk> chunks, CallbackInfo ci, int i, SpawnHelper.Info info){
+	private void setupSpawning(Profiler profiler, long timeDelta, CallbackInfo ci, int i, SpawnHelper.Info info){
 
 		/*
 			Every all-chunks tick:
@@ -54,8 +53,8 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 			3. Loop through all world's entities and add them to player's counts
 	 	*/
 		// update distance map
-		playerDistanceMap.update(this.world.getPlayers(), ((TACSAccess) this.ticketManager).simulationDistance());
-		((InfoAccess)info).setChunkManager(this);
+		playerDistanceMap.update(this.world.getPlayers(), ((TACSAccess) this.levelManager).fabric_per_player_spawns$simulationDistance());
+		((InfoAccess)info).fabric_per_player_spawns$setChunkManager(this);
 
 		// calculate mob counts
 		Iterator<Entity> var5 = world.iterateEntities().iterator();
@@ -78,14 +77,14 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 					// Find players in range of entity
 					for (ServerPlayerEntity player : this.playerDistanceMap.getPlayersInRange(ll)) {
 						// Increment player's sighting of entity
-						((InfoAccess)info).incrementPlayerMobCount(player, spawnGroup);
+						((InfoAccess)info).fabric_per_player_spawns$incrementPlayerMobCount(player, spawnGroup);
 				}
 			}
 		}
 
 		/* debugging */
 
-		PlayerMobCountMap map = ((InfoAccess)info).getPlayerMobCountMap();
+		PlayerMobCountMap map = ((InfoAccess)info).fabric_per_player_spawns$getPlayerMobCountMap();
 		for (ServerPlayerEntity player : this.world.getPlayers()) {
 			if(!player.getMainHandStack().isOf(Items.GLISTERING_MELON_SLICE)) continue;
 

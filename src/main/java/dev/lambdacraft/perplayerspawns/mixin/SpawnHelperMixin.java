@@ -1,9 +1,6 @@
 package dev.lambdacraft.perplayerspawns.mixin;
 
-import dev.lambdacraft.perplayerspawns.access.InfoAccess;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.entity.SpawnGroup;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.SpawnHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
