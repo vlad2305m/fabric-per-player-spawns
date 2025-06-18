@@ -17,7 +17,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.world.SpawnHelper;
-import net.minecraft.world.chunk.WorldChunk;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -28,7 +27,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.Iterator;
-import java.util.List;
 
 
 @Mixin (ServerChunkManager.class)
@@ -55,7 +53,7 @@ public class ServerChunkManagerMixin implements ServerChunkManagerMixinAccess {
 			3. Loop through all world's entities and add them to player's counts
 	 	*/
 		// update distance map
-		playerDistanceMap.update(this.world.getPlayers(), ((TACSAccess) this.levelManager).simulationDistance());
+		playerDistanceMap.update(this.world.getPlayers(), ((TACSAccess) this.levelManager).fabric_per_player_spawns$simulationDistance());
 		((InfoAccess)info).fabric_per_player_spawns$setChunkManager(this);
 
 		// calculate mob counts
