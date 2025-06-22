@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin (ChunkLevelManager.class)
 public abstract class TACSMixin implements TACSAccess {
 	@Shadow private int simulationDistance;
-	public int simulationDistance() {
+	public int fabric_per_player_spawns$simulationDistance() {
 		return this.simulationDistance;
 	}
 }
