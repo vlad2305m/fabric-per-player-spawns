@@ -4,10 +4,10 @@
   "package": "dev.lambdacraft.perplayerspawns.mixin",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
-    "ServerChunkManagerMixin",
-    "TACSMixin",
-    "InnerInfoMixin",
-    "SpawnHelperMixin"
+    "ServerChunkCacheMixin",
+    "DistanceManagerMixin",
+    "NaturalSpawnerSpawnStateMixin",
+    "NaturalSpawnerMixin"
   ],
   "client": [
   ],

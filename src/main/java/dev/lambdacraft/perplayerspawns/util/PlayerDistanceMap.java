@@ -4,9 +4,9 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.ChunkSectionPos;
+import net.minecraft.core.SectionPos;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.ChunkPos;
 
 import java.util.HashMap;
 import java.util.List;
@@ -17,37 +17,37 @@ import java.util.Map;
  */
 public final class PlayerDistanceMap {
 
-	private static final PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity> EMPTY_SET = new PooledHashSets.PooledObjectLinkedOpenHashSet<>();
+	private static final PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayer> EMPTY_SET = new PooledHashSets.PooledObjectLinkedOpenHashSet<>();
 
-	private final Map<ServerPlayerEntity, ChunkSectionPos> players = new HashMap<>();
+	private final Map<ServerPlayer, SectionPos> players = new HashMap<>();
 	// we use linked for better iteration.
-	private final Long2ObjectOpenHashMap<PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity>> playerMapUnsynched = new Long2ObjectOpenHashMap<>(1024, 0.5f);
-	private final Long2ObjectMap<PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity>> playerMap = Long2ObjectMaps.synchronize(playerMapUnsynched);
+	private final Long2ObjectOpenHashMap<PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayer>> playerMapUnsynched = new Long2ObjectOpenHashMap<>(1024, 0.5f);
+	private final Long2ObjectMap<PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayer>> playerMap = Long2ObjectMaps.synchronize(playerMapUnsynched);
 	private int viewDistance;
 
-	private final PooledHashSets<ServerPlayerEntity> pooledHashSets = new PooledHashSets<>();
+	private final PooledHashSets<ServerPlayer> pooledHashSets = new PooledHashSets<>();
 
-	public PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity> getPlayersInRange(final long l) {
+	public PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayer> getPlayersInRange(final long l) {
 		return this.playerMap.getOrDefault(l, EMPTY_SET);
 	}
 	public long posMapSize() { return this.playerMap.size(); }
 
-	public void update(final List<ServerPlayerEntity> currentPlayers, final int newViewDistance) {
+	public void update(final List<ServerPlayer> currentPlayers, final int newViewDistance) {
 
-		final ObjectLinkedOpenHashSet<ServerPlayerEntity> gone = new ObjectLinkedOpenHashSet<>(this.players.keySet());
+		final ObjectLinkedOpenHashSet<ServerPlayer> gone = new ObjectLinkedOpenHashSet<>(this.players.keySet());
 
 		final int oldViewDistance = this.viewDistance;
 		this.viewDistance = newViewDistance;
 
-		for (final ServerPlayerEntity player : currentPlayers) {
+		for (final ServerPlayer player : currentPlayers) {
 			if (player.isSpectator()) {
 				continue; // will be left in 'gone' (or not added at all)
 			}
 
 			gone.remove(player);
 
-			final ChunkSectionPos newPosition = player.getWatchedSection();
-			final ChunkSectionPos oldPosition = this.players.put(player, newPosition);
+			final SectionPos newPosition = player.getLastSectionPos();
+			final SectionPos oldPosition = this.players.put(player, newPosition);
 
 			if (oldPosition == null) {
 				this.addNewPlayer(player, newPosition, newViewDistance);
@@ -57,8 +57,8 @@ public final class PlayerDistanceMap {
 			//this.validatePlayer(player, newViewDistance); // debug only
 		}
 
-		for (final ServerPlayerEntity player : gone) {
-			final ChunkSectionPos oldPosition = this.players.remove(player);
+		for (final ServerPlayer player : gone) {
+			final SectionPos oldPosition = this.players.remove(player);
 			if (oldPosition != null) {
 				this.removePlayer(player, oldPosition, oldViewDistance);
 			}
@@ -66,20 +66,20 @@ public final class PlayerDistanceMap {
 	}
 
 	// expensive op, only for debug
-	/*private void validatePlayer(final ServerPlayerEntity player, final int viewDistance) {
+	/*private void validatePlayer(final ServerPlayer player, final int viewDistance) {
 
 		int entiesGot = 0;
 		int expectedEntries = (2 * viewDistance + 1);
 		expectedEntries *= expectedEntries;
 
-		final ChunkSectionPos currPosition = ((ServerServerPlayerEntity)player).getCameraPosition();
+		final SectionPos currPosition = ((ServerServerPlayer)player).getCameraPosition();
 
 		final int centerX = currPosition.getX();
 		final int centerZ = currPosition.getZ();
 
-		for (final Long2ObjectLinkedOpenHashMap.Entry<PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity>> entry : this.playerMap.long2ObjectEntrySet()) {
+		for (final Long2ObjectLinkedOpenHashMap.Entry<PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayer>> entry : this.playerMap.long2ObjectEntrySet()) {
 			final long key = entry.getLongKey();
-			final PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity> map = entry.getValue();
+			final PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayer> map = entry.getValue();
 
 			if (map.referenceCount == 0) {
 				throw new IllegalStateException("Invalid map");
@@ -104,8 +104,8 @@ public final class PlayerDistanceMap {
 		}
 	}*/
 
-	private void addPlayerTo(final ServerPlayerEntity player, final int chunkX, final int chunkZ) {
-		this.playerMap.compute(ChunkPos.toLong(chunkX, chunkZ), (final Long key, final PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity> players) -> {
+	private void addPlayerTo(final ServerPlayer player, final int chunkX, final int chunkZ) {
+		this.playerMap.compute(ChunkPos.pack(chunkX, chunkZ), (final Long key, final PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayer> players) -> {
 			if (players == null) {
 				return new PooledHashSets.PooledObjectLinkedOpenHashSet<>(player);
 			} else {
@@ -114,14 +114,14 @@ public final class PlayerDistanceMap {
 		});
 	}
 
-	private void removePlayerFrom(final ServerPlayerEntity player, final int chunkX, final int chunkZ) {
-		this.playerMap.compute(ChunkPos.toLong(chunkX, chunkZ), (final Long keyInMap, final PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity> players) -> {
+	private void removePlayerFrom(final ServerPlayer player, final int chunkX, final int chunkZ) {
+		this.playerMap.compute(ChunkPos.pack(chunkX, chunkZ), (final Long keyInMap, final PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayer> players) -> {
 			assert players != null;
 			return PlayerDistanceMap.this.pooledHashSets.findMapWithout(players, player); // rets null instead of an empty map
 		});
 	}
 
-	private void updatePlayer(final ServerPlayerEntity player, final ChunkSectionPos oldPosition, final ChunkSectionPos newPosition, final int oldViewDistance, final int newViewDistance) {
+	private void updatePlayer(final ServerPlayer player, final SectionPos oldPosition, final SectionPos newPosition, final int oldViewDistance, final int newViewDistance) {
 		final int toX = newPosition.getX();
 		final int toZ = newPosition.getZ();
 		final int fromX = oldPosition.getX();
@@ -269,7 +269,7 @@ public final class PlayerDistanceMap {
 		}
 	}
 
-	private void removePlayer(final ServerPlayerEntity player, final ChunkSectionPos position, final int viewDistance) {
+	private void removePlayer(final ServerPlayer player, final SectionPos position, final int viewDistance) {
 		final int x = position.getX();
 		final int z = position.getZ();
 
@@ -280,7 +280,7 @@ public final class PlayerDistanceMap {
 		}
 	}
 
-	private void addNewPlayer(final ServerPlayerEntity player, final ChunkSectionPos position, final int viewDistance) {
+	private void addNewPlayer(final ServerPlayer player, final SectionPos position, final int viewDistance) {
 		final int x = position.getX();
 		final int z = position.getZ();
 

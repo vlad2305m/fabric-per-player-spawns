@@ -8,7 +8,8 @@
   "authors": [
     "halfof2 <devan@cleverpath.com>",
     "unsupervised@tutanota.com",
-    "vlad2305m"
+    "vlad2305m",
+    "MCJEModder2026"
   ],
   "contact": {
     "sources": "https://github.com/vlad2305m/fabric-per-player-spawns"
@@ -26,7 +27,7 @@
   ],
 
   "depends": {
-    "fabricloader": ">=0.16",
+    "fabricloader": ">=0.19",
     "minecraft": ">=1.21.6"
   }
 }
