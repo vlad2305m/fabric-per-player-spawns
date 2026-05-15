@@ -1,6 +1,7 @@
 {
   "required": true,
   "minVersion": "0.8.2",
+  "mixinextras": {"minVersion": "0.5.4"},
   "package": "dev.lambdacraft.perplayerspawns.mixin",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
