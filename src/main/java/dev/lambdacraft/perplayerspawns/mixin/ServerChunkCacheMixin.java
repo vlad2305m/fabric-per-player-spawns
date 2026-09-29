@@ -45,12 +45,12 @@ public class ServerChunkCacheMixin implements ServerChunkCacheMixinAccess {
 	private final PlayerDistanceMap playerDistanceMap = new PlayerDistanceMap();
 	public PlayerDistanceMap fabric_per_player_spawns$getPlayerDistanceMap() { return playerDistanceMap; }
 
-	@Definition(id = "createState", method = "Lnet/minecraft/world/level/NaturalSpawner;createState(ILjava/lang/Iterable;Lnet/minecraft/world/level/NaturalSpawner$ChunkGetter;Lnet/minecraft/world/level/LocalMobCapCalculator;)Lnet/minecraft/world/level/NaturalSpawner$SpawnState;")
+	@Definition(id = "createState", method = "Lnet/minecraft/world/level/NaturalSpawner;createState(ILnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/NaturalSpawner$ChunkGetter;Lnet/minecraft/world/level/LocalMobCapCalculator;)Lnet/minecraft/world/level/NaturalSpawner$SpawnState;")
     @Expression("? = createState(?, ?, ?, ?)")
     @Inject(
-			method = "tickChunks(Lnet/minecraft/util/profiling/ProfilerFiller;J)V",
+			method = "tickChunks(Lnet/minecraft/util/profiling/ProfilerFiller;)V",
             at = @At(value = "MIXINEXTRAS:EXPRESSION", shift = At.Shift.AFTER), locals = LocalCapture.CAPTURE_FAILHARD)
-	private void setupSpawning(ProfilerFiller profiler, long timeDelta, CallbackInfo ci, int i, NaturalSpawner.SpawnState info){
+	private void setupSpawning(ProfilerFiller profiler, CallbackInfo ci, int i, NaturalSpawner.SpawnState info){
 
 		/*
 			Every all-chunks tick:
