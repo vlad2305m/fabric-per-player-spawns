@@ -10,6 +10,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.NaturalSpawner;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,7 +25,7 @@ public class NaturalSpawnerSpawnStateMixin implements SpawnStateAccess {
 
     // My way to ensure chunk is right
     @Inject(method = "canSpawn", at = @At("HEAD"), cancellable = true)
-    private void canSpawnInChunkDueToPerPlayerCaps(EntityType<?> type, BlockPos testPos, ChunkAccess chunk, CallbackInfoReturnable<Boolean> cir){
+    private void canSpawnInChunkDueToPerPlayerCaps(EntityType<?> type, Level level, BlockPos testPos, ChunkAccess chunk, CallbackInfoReturnable<Boolean> cir){
         if (this.fabric_per_player_spawns$isAboveChunkCap(type.getCategory(), ChunkPos.containing(testPos))) cir.setReturnValue(false);
     }
 
